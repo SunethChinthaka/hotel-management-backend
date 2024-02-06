@@ -21,7 +21,9 @@ public class Room {
     private Long id;
 
     private String roomType;
+
     private BigDecimal roomPrice;
+
     private boolean isBooked = false;
 
     @Lob
@@ -30,13 +32,24 @@ public class Room {
     /**
      * A list of BookedRoom entities associated with this room.
      * It's a One-to-Many relationship, indicating that one room can have multiple bookings.
-     * It's fetched lazily, meaning it will be loaded from the database only when accessed.
-     * CascadeType.ALL: Indicates that if any operation is performed on the Room, the same operation should be cascaded
-     * to all its associated BookedRoom entities.
-     * For example, if a Room is deleted, all associated BookedRoom entities should also be deleted.
-     * This helps to maintain referential integrity between the entities.
+     * <p>
+     * mappedBy = "room": This parameter specifies the name of the attribute in the BookedRoom entity that owns the relationship.
+     * In this case, it's the room attribute in the BookedRoom class.
+     * This means that the BookedRoom entity is the owner of the relationship,
+     * and the mapping is defined by the room attribute in the BookedRoom class.
+     * <p>
+     * fetch = FetchType.LAZY: This parameter specifies the fetch type for the association.
+     * With FetchType.LAZY, the associated BookedRoom entities will be loaded lazily,
+     * meaning they will not be fetched from the database until they are explicitly accessed.
+     * This can help improve performance by avoiding unnecessary loading of associated entities until they are actually needed.
+     * <p>
+     * cascade = CascadeType.ALL: This parameter specifies the cascade operations to be applied to the
+     * associated BookedRoom entities when operations are performed on the owning Room entity.
+     * With CascadeType.ALL, all cascade operations (including persist, merge, remove, and refresh)
+     * are applied to the associated BookedRoom entities when corresponding operations are performed on the Room entity.
+     * For example, if a Room is deleted, all associated BookedRoom entities will also be deleted.
      */
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BookedRoom> bookings;
 
     public Room() {
