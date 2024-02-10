@@ -53,7 +53,7 @@ public class BookedRoom {
 
     // Helper method to calculate total number of guests
     public void calculateTotalNumberOfGuest() {
-        this.totalNumOfGuests = this.numOfAdults + numOfChildren;
+        this.totalNumOfGuests = this.numOfAdults + this.numOfChildren;
     }
 
     // Setter method for the number of adults, triggers total guest calculation
