@@ -1,5 +1,6 @@
 package com.suneth.hotel.service;
 
+import com.suneth.hotel.exception.InternalServerException;
 import com.suneth.hotel.exception.ResourceNotFoundException;
 import com.suneth.hotel.model.Room;
 import com.suneth.hotel.repository.RoomRepository;
@@ -44,7 +45,7 @@ public class RoomServiceImpl implements IRoomService {
     }
 
     @Override
-    public byte[] getRoomPhotoById(Long roomId) throws SQLException {
+    public byte[] getRoomPhotoByRoomId(Long roomId) throws SQLException {
         Optional<Room> room = roomRepository.findById(roomId);
         if (room.isEmpty()) {
             throw new ResourceNotFoundException("Unable to find the room");
@@ -54,5 +55,33 @@ public class RoomServiceImpl implements IRoomService {
             return photoBlob.getBytes(1, (int) photoBlob.length());
         }
         return null;
+    }
+
+    @Override
+    public void deleteRoom(Long roomId) {
+        Optional<Room> room = roomRepository.findById(roomId);
+        if (room.isPresent()) {
+            roomRepository.deleteById(roomId);
+        }
+    }
+
+    @Override
+    public Room updateRoom(Long roomId, String roomType, BigDecimal roomPrice, byte[] photoBytes) {
+        Room room = roomRepository.findById(roomId).get();
+        if (roomType != null) room.setRoomType(roomType);
+        if (roomPrice != null) room.setRoomPrice(roomPrice);
+        if (photoBytes != null && photoBytes.length > 0) {
+            try {
+                room.setPhoto(new SerialBlob(photoBytes));
+            } catch (SQLException e) {
+                throw new InternalServerException("unable to update room");
+            }
+        }
+        return roomRepository.save(room);
+    }
+
+    @Override
+    public Optional<Room> getRoomById(Long roomId) {
+        return Optional.of(roomRepository.findById(roomId).get());
     }
 }

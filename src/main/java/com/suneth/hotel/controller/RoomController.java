@@ -1,6 +1,7 @@
 package com.suneth.hotel.controller;
 
 import com.suneth.hotel.exception.PhotoRetrievalException;
+import com.suneth.hotel.exception.ResourceNotFoundException;
 import com.suneth.hotel.model.BookedRoom;
 import com.suneth.hotel.model.Room;
 import com.suneth.hotel.response.BookingResponse;
@@ -9,16 +10,19 @@ import com.suneth.hotel.service.IBookingService;
 import com.suneth.hotel.service.IRoomService;
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.codec.binary.Base64;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.sql.rowset.serial.SerialBlob;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
@@ -51,7 +55,7 @@ public class RoomController {
         List<Room> rooms = roomService.getAllRooms();
         List<RoomResponse> roomResponses = new ArrayList<>();
         for (Room room : rooms) {
-            byte[] photoBytes = roomService.getRoomPhotoById(room.getId());
+            byte[] photoBytes = roomService.getRoomPhotoByRoomId(room.getId());
             if (photoBytes != null && photoBytes.length > 0) {
                 String base64Photo = Base64.encodeBase64String(photoBytes);
                 RoomResponse roomResponse = getRoomResponse(room);
@@ -62,6 +66,7 @@ public class RoomController {
         return ResponseEntity.ok(roomResponses);
     }
 
+    // Constructs a RoomResponse based on the details of a given Room entity.
     private RoomResponse getRoomResponse(Room room) {
         List<BookedRoom> bookings = getAllBookingsByRoomId(room.getId());
     /*    List<BookingResponse> bookingInfo = bookings
@@ -84,8 +89,43 @@ public class RoomController {
         return new RoomResponse(room.getId(), room.getRoomType(), room.getRoomPrice(), room.isBooked(), photoBytes);
     }
 
+    // Retrieves all bookings associated with the provided room ID.
     private List<BookedRoom> getAllBookingsByRoomId(Long roomId) {
         return bookingService.getAllBookingsByRoomId(roomId);
 
+    }
+
+    // Endpoint to deletes a room by its ID.
+    @DeleteMapping("{roomId}")
+    public ResponseEntity<Void> deleteRoom(@PathVariable Long roomId) {
+        roomService.deleteRoom(roomId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    // Endpoint to update a room by its ID.
+    @PutMapping("{roomId}")
+    public ResponseEntity<RoomResponse> updateRoom(
+            @PathVariable Long roomId,
+            @RequestParam(required = false) String roomType,
+            @RequestParam(required = false) BigDecimal roomPrice,
+            @RequestParam(required = false) MultipartFile photo) throws IOException, SQLException {
+        byte[] photoBytes = photo != null && !photo.isEmpty() ?
+                photo.getBytes() : roomService.getRoomPhotoByRoomId(roomId);
+        Blob photoBlob = photoBytes != null && photoBytes.length > 0 ? new SerialBlob(photoBytes) : null;
+        Room room = roomService.updateRoom(roomId, roomType, roomPrice, photoBytes);
+        room.setPhoto(photoBlob);
+        RoomResponse roomResponse = getRoomResponse(room);
+        return ResponseEntity.ok(roomResponse);
+
+    }
+
+    // Retrieves a room by its ID.
+    @GetMapping("{roomId}")
+    public ResponseEntity<Optional<RoomResponse>> getRoomById(@PathVariable Long roomId) {
+        Optional<Room> theRoom = roomService.getRoomById(roomId);
+        return theRoom.map(room -> {
+            RoomResponse roomResponse = getRoomResponse(room);
+            return ResponseEntity.ok(Optional.of(roomResponse));
+        }).orElseThrow(() -> new ResourceNotFoundException("Room not found"));
     }
 }
