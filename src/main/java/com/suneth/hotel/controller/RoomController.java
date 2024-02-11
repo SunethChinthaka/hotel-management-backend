@@ -20,6 +20,7 @@ import java.util.List;
 public class RoomController {
     private final IRoomService roomService;
 
+    // Endpoint to add a new room
     @PostMapping
     public ResponseEntity<RoomResponse> addNewRoom(
             @RequestParam("photo") MultipartFile photo,
@@ -29,6 +30,7 @@ public class RoomController {
         RoomResponse response = new RoomResponse(savedRoom.getId(), savedRoom.getRoomType(), savedRoom.getRoomPrice());
         return ResponseEntity.ok(response);
     }
+    // Endpoint to get all room types
     @GetMapping("/room-types")
     public List<String>getRoomTypes() {
         return roomService.getAllRoomTypes();
