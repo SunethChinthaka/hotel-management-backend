@@ -21,11 +21,13 @@ import java.util.Optional;
 public class RoomServiceImpl implements IRoomService {
     private final RoomRepository roomRepository;
 
+    // Method to add a new room
     @Override
     public Room addNewRoom(MultipartFile photo, String roomType, BigDecimal roomPrice) throws IOException, SQLException {
         Room room = new Room();
         room.setRoomType(roomType);
         room.setRoomPrice(roomPrice);
+        // If photo is provided, set photo as Blob
         if (!photo.isEmpty()) {
             byte[] photoBytes = photo.getBytes(); // Converting photo to bytes
             Blob photoBlob = new SerialBlob(photoBytes); // Creating Blob object from bytes
@@ -34,22 +36,26 @@ public class RoomServiceImpl implements IRoomService {
         return roomRepository.save(room);
     }
 
+    // Method to get all distinct room types
     @Override
     public List<String> getAllRoomTypes() {
         return roomRepository.findDistinctRoomTypes();
     }
 
+    // Method to get all rooms
     @Override
     public List<Room> getAllRooms() {
         return roomRepository.findAll();
     }
 
+    // Method to get room photo bytes by room ID
     @Override
     public byte[] getRoomPhotoByRoomId(Long roomId) throws SQLException {
         Optional<Room> room = roomRepository.findById(roomId);
         if (room.isEmpty()) {
             throw new ResourceNotFoundException("Unable to find the room");
         }
+        // Retrieve photo blob from the room
         Blob photoBlob = room.get().getPhoto();
         if (photoBlob != null) {
             return photoBlob.getBytes(1, (int) photoBlob.length());
@@ -57,6 +63,7 @@ public class RoomServiceImpl implements IRoomService {
         return null;
     }
 
+    // Method to delete a room by room ID
     @Override
     public void deleteRoom(Long roomId) {
         Optional<Room> room = roomRepository.findById(roomId);
@@ -65,6 +72,7 @@ public class RoomServiceImpl implements IRoomService {
         }
     }
 
+    // Method to update a room
     @Override
     public Room updateRoom(Long roomId, String roomType, BigDecimal roomPrice, byte[] photoBytes) {
         Room room = roomRepository.findById(roomId).get();
@@ -80,6 +88,7 @@ public class RoomServiceImpl implements IRoomService {
         return roomRepository.save(room);
     }
 
+    // Method to get a room by its ID
     @Override
     public Optional<Room> getRoomById(Long roomId) {
         return Optional.of(roomRepository.findById(roomId).get());
