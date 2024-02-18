@@ -1,6 +1,7 @@
 package com.suneth.hotel.service;
 
 import com.suneth.hotel.exception.InvalidBookingRequestException;
+import com.suneth.hotel.exception.ResourceNotFoundException;
 import com.suneth.hotel.model.BookedRoom;
 import com.suneth.hotel.model.Room;
 import com.suneth.hotel.repository.BookingRepository;
@@ -85,7 +86,8 @@ public class BookingServiceImpl implements IBookingService {
     // Method to find a booking by its confirmation code
     @Override
     public BookedRoom findByBookingConfirmationCode(String confirmationCode) {
-        return bookingRepository.findByBookingConfirmationCode(confirmationCode);
+        return bookingRepository.findByBookingConfirmationCode(confirmationCode)
+                .orElseThrow(()->new ResourceNotFoundException("No Booking Found for Confirmation Code! " + confirmationCode));
     }
 }
 /**
